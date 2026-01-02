@@ -1,0 +1,32 @@
+<!DOCTYPE ntml>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-with, initial-scale=1.0"/>
+        <link rel="stylesheet" href="style2.0.css">
+        <h1 class="logo">The MAN'Z</h1>
+    </head>
+    <body>
+        <!--navigation-->
+        <header>
+            <nav>
+                <div class="logo">The <span>man'z</span></div>
+                <div class="nav-link">
+                    <a href="#home">Home</a>
+                    <a href="#about">About</a>
+                    <a href="#destination">Destination</a>
+                    <a href="#contact">Contact</a>
+                </div>
+            </nav>
+        </header>
+
+        <!--Destination-->
+        <div class="container">
+            <img src="" alt="miami">
+            <div class="content">
+                <h2>Explore ,Traveling and Photography is a Value</h2>
+            </div>
+        </div>
+        <strong>sucess!</strong>Represent a successful or positive action.</br>>
+    </body>
+</html>
