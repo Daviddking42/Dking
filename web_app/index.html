@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MalariaShield AI - Clinical Decision Support System</title>
+    <!-- Google Fonts: Inter and Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-mode">
+    <!-- Authentication Overlay Screen -->
+    <div class="login-overlay" id="login-overlay">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="logo-icon large">
+                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="8" width="14" height="8" rx="4" transform="rotate(-45 12 12)" fill="currentColor" fill-opacity="0.2"/>
+                        <path d="M4 20c-1.5-1.5-1-4-2.5-5.5" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M5 21c-2-1-3-3.5-5-4.5" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="8" y1="6" x2="6.5" y2="4.5" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="16" y1="6.5" x2="17.5" y2="5" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="18" y1="14.5" x2="19.5" y2="16" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="10" y1="17.5" x2="8.5" y2="19" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="17" y1="10" x2="19" y2="10" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="5" y1="14" x2="3" y2="14" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M10 11.5c1 0 1 1 2 1s1-1 2-1" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                </div>
+                <h2 id="auth-card-title">MalariaShield AI</h2>
+                <p id="auth-card-subtitle">Clinical Decision Support Portal</p>
+            </div>
+
+            <!-- Role Tabs (visible on Login view only) -->
+            <div class="login-tabs" id="role-tabs">
+                <button class="login-tab active" id="btn-login-doctor" onclick="switchLoginTab('doctor')">Doctor Access</button>
+                <button class="login-tab" id="btn-login-patient" onclick="switchLoginTab('patient')">Patient Portal</button>
+            </div>
+
+            <!-- ===================== LOGIN VIEW ===================== -->
+            <div id="login-view">
+                <!-- Doctor Login Form -->
+                <form id="doctor-login-form" class="login-form" onsubmit="handleDoctorLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="login-username">Username</label>
+                        <input type="text" id="login-username" class="compact-input" required placeholder="Enter your username">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="login-password">Password</label>
+                        <input type="password" id="login-password" class="compact-input" required placeholder="Enter your password">
+                    </div>
+                    <div class="login-error hidden" id="login-error-msg">Invalid credentials. Please try again.</div>
+                    <button type="submit" class="btn primary-btn full-width-btn" id="btn-doctor-signin">Sign In as Doctor</button>
+                    <div class="auth-switch-link">
+                        Don't have an account? <a href="#" onclick="showRegisterView('doctor'); return false;">Register here</a>
+                    </div>
+                </form>
+
+                <!-- Patient Login Form -->
+                <form id="patient-login-form" class="login-form hidden" onsubmit="handlePatientLogin(event)">
+                    <div class="form-group">
+                        <label class="form-label" for="login-patient-username">Username or Patient ID</label>
+                        <input type="text" id="login-patient-username" class="compact-input" required placeholder="Your username or ID">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="login-patient-password">Password</label>
+                        <input type="password" id="login-patient-password" class="compact-input" placeholder="Your password (leave blank for legacy ID login)">
+                    </div>
+                    <div class="login-error hidden" id="patient-error-msg">Account not found. Check credentials or register.</div>
+                    <button type="submit" class="btn primary-btn full-width-btn">Sign In as Patient</button>
+                    <div class="login-or-divider"><span>OR</span></div>
+                    <button type="button" class="btn secondary-btn full-width-btn" onclick="handleGuestLogin()">Access as Guest (Self Assessment)</button>
+                    <div class="auth-switch-link">
+                        New patient? <a href="#" onclick="showRegisterView('patient'); return false;">Create account</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ===================== REGISTER VIEW ===================== -->
+            <div id="register-view" class="hidden">
+                <!-- Doctor Registration -->
+                <form id="doctor-register-form" class="login-form" onsubmit="handleDoctorRegister(event)">
+                    <div class="register-role-badge doctor">🩺 Doctor / Admin Registration</div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-doctor-name">Full Name</label>
+                        <input type="text" id="reg-doctor-name" class="compact-input" required placeholder="e.g. Dr. Jane Smith">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-doctor-username">Username</label>
+                        <input type="text" id="reg-doctor-username" class="compact-input" required placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-doctor-password">Password</label>
+                        <input type="password" id="reg-doctor-password" class="compact-input" required placeholder="Create a strong password">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-doctor-confirm">Confirm Password</label>
+                        <input type="password" id="reg-doctor-confirm" class="compact-input" required placeholder="Repeat your password">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-doctor-specialty">Specialty</label>
+                        <input type="text" id="reg-doctor-specialty" class="compact-input" placeholder="e.g. Infectious Disease (optional)">
+                    </div>
+                    <div class="login-error hidden" id="doctor-reg-error-msg">Error message</div>
+                    <div class="login-success hidden" id="doctor-reg-success-msg">Account created! You can now log in.</div>
+                    <button type="submit" class="btn primary-btn full-width-btn">Create Doctor Account</button>
+                    <div class="auth-switch-link">
+                        Already have an account? <a href="#" onclick="showLoginView('doctor'); return false;">Sign in</a>
+                    </div>
+                </form>
+
+                <!-- Patient Registration -->
+                <form id="patient-register-form" class="login-form hidden" onsubmit="handlePatientRegister(event)">
+                    <div class="register-role-badge patient">👤 Patient Registration</div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-patient-name">Full Name</label>
+                        <input type="text" id="reg-patient-name" class="compact-input" required placeholder="e.g. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-patient-username">Username</label>
+                        <input type="text" id="reg-patient-username" class="compact-input" required placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-patient-password">Password</label>
+                        <input type="password" id="reg-patient-password" class="compact-input" required placeholder="Create a strong password">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="reg-patient-confirm">Confirm Password</label>
+                        <input type="password" id="reg-patient-confirm" class="compact-input" required placeholder="Repeat your password">
+                    </div>
+                    <div class="login-error hidden" id="patient-reg-error-msg">Error message</div>
+                    <div class="login-success hidden" id="patient-reg-success-msg">Account created! A Patient ID has been assigned.</div>
+                    <button type="submit" class="btn primary-btn full-width-btn">Create Patient Account</button>
+                    <div class="auth-switch-link">
+                        Already have an account? <a href="#" onclick="showLoginView('patient'); return false;">Sign in</a>
+                    </div>
+                </form>
+            </div>
+
+            <div class="login-footer">
+                <p>Secure clinical-grade decision support platform</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Shell Dashboard -->
+    <div class="app-container hidden" id="app-shell">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-icon">
+                    <!-- Bacterium SVG -->
+                    <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="8" width="14" height="8" rx="4" transform="rotate(-45 12 12)" fill="currentColor" fill-opacity="0.1"/>
+                        <path d="M4 20c-1.5-1.5-1-4-2.5-5.5" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M5 21c-2-1-3-3.5-5-4.5" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="8" y1="6" x2="6.5" y2="4.5" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="16" y1="6.5" x2="17.5" y2="5" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="18" y1="14.5" x2="19.5" y2="16" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="10" y1="17.5" x2="8.5" y2="19" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="17" y1="10" x2="19" y2="10" stroke="currentColor" stroke-width="1.5"/>
+                        <line x1="5" y1="14" x2="3" y2="14" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M10 11.5c1 0 1 1 2 1s1-1 2-1" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>MalariaShield</h1>
+                    <span>DECISION SUPPORT</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <!-- Doctor Menu Items -->
+                <a href="#" class="menu-item active doctor-only" data-tab="dashboard">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+                    <span>Dashboard Overview</span>
+                </a>
+                
+                <!-- Patient-Specific Menu Item -->
+                <a href="#" class="menu-item patient-only" data-tab="patient-record">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="3" y="4" width="18" height="16" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span>My Health Record</span>
+                </a>
+
+                <a href="#" class="menu-item" data-tab="diagnosis">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    <span id="nav-predict-label">Patient Diagnosis</span>
+                </a>
+                
+                <a href="#" class="menu-item doctor-only" data-tab="performance">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    <span>Model Insights</span>
+                </a>
+                
+                <a href="#" class="menu-item doctor-only" data-tab="monitor">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>Retrain & Monitor</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile-widget mb-16">
+                    <div class="user-avatar" id="avatar-label">D</div>
+                    <div class="user-info">
+                        <span class="user-name" id="user-display-name">Dr. Admin</span>
+                        <span class="user-role" id="user-display-role">Staff Physician</span>
+                    </div>
+                </div>
+                
+                <button class="btn secondary-btn full-width-btn mb-16" onclick="handleSignOut()">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    <span>Sign Out</span>
+                </button>
+
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text">Local Engine Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Bar Header -->
+            <header class="top-bar">
+                <div class="header-title">
+                    <h2 id="view-title">Dashboard Overview</h2>
+                    <p id="view-subtitle">Real-time clinical metrics and patient stats</p>
+                </div>
+                <div class="header-actions">
+                    <div class="model-badge">
+                        <span class="badge-label">Active Model</span>
+                        <span id="active-model-name" class="badge-value">Logistic Regression</span>
+                    </div>
+                    <button class="theme-toggle" id="theme-toggle-btn" aria-label="Toggle Dark/Light Mode">
+                        <svg id="theme-icon-sun" class="hidden" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                        <svg id="theme-icon-moon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Content Panels -->
+            <!-- 1. Doctor Dashboard Overview -->
+            <div class="content-panel active" id="tab-dashboard">
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-title">Total Records</span>
+                            <div class="metric-icon blue">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="stat-total-records">1,500</div>
+                        <div class="metric-change positive">Active clinical archive</div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-title">Malaria Positive Rate</span>
+                            <div class="metric-icon red">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="stat-positive-rate">43.5%</div>
+                        <div class="metric-change" id="stat-positive-count">653 positive patients</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-title">Model Accuracy (Test)</span>
+                            <div class="metric-icon teal">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="stat-model-accuracy">96.0%</div>
+                        <div class="metric-change positive">Logistic Regression</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <span class="metric-title">Recall (Sensitivity)</span>
+                            <div class="metric-icon purple">
+                                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            </div>
+                        </div>
+                        <div class="metric-value" id="stat-model-recall">94.9%</div>
+                        <div class="metric-change positive">Crucial for not missing cases</div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Sections -->
+                <div class="dashboard-row">
+                    <!-- Left: Clinical Statistics & Distributions -->
+                    <div class="glass-card flex-2">
+                        <div class="card-header">
+                            <h3>Symptom Prevalence & Distribution</h3>
+                            <span class="card-subtitle">Occurrence in malaria-positive vs negative cohorts</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="symptom-bars-container" id="symptom-bars">
+                                <div class="loading-placeholder">Loading clinical distributions...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Quick Diagnostic Form Link -->
+                    <div class="glass-card flex-1 accent-border">
+                        <div class="card-header">
+                            <h3>Rapid Diagnostic Sandbox</h3>
+                            <span class="card-subtitle">Quickly screen for malaria suspect status</span>
+                        </div>
+                        <div class="card-body centered">
+                            <div class="sandbox-teaser">
+                                <div class="teaser-icon">
+                                    <!-- Bacterium teaser SVG -->
+                                    <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none">
+                                        <rect x="5" y="8" width="14" height="8" rx="4" transform="rotate(-45 12 12)" fill="currentColor" fill-opacity="0.1"/>
+                                        <path d="M4 20c-1.5-1.5-1-4-2.5-5.5" stroke="currentColor"/>
+                                        <line x1="8" y1="6" x2="6.5" y2="4.5" stroke="currentColor"/>
+                                        <line x1="16" y1="6.5" x2="17.5" y2="5" stroke="currentColor"/>
+                                    </svg>
+                                </div>
+                                <p>Evaluate patient symptom profiles and high-precision temperature readings using our optimized predictive algorithms.</p>
+                                <button class="btn primary-btn" onclick="switchTab('diagnosis')">Open Diagnosis Terminal</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Patient Logs -->
+                <div class="glass-card mt-24">
+                    <div class="card-header">
+                        <h3>Recent Diagnostic Archive</h3>
+                        <span class="card-subtitle">Historical patient data representation</span>
+                    </div>
+                    <div class="card-body table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Patient ID</th>
+                                    <th>Fever</th>
+                                    <th>Chills</th>
+                                    <th>Headache</th>
+                                    <th>Nausea</th>
+                                    <th>Fatigue</th>
+                                    <th>Anemia</th>
+                                    <th>Temperature</th>
+                                    <th>Actual Malaria Status</th>
+                                    <th class="doctor-only">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patient-table-body">
+                                <!-- Loaded dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Patient Specific View -->
+            <div class="content-panel" id="tab-patient-record">
+                <div class="dashboard-row mb-24">
+                    <!-- Welcome profile -->
+                    <div class="glass-card flex-1 accent-border">
+                        <div class="card-header">
+                            <h3 id="patient-portal-title">Patient Portal: PAT_0001</h3>
+                            <span class="card-subtitle">Your personal diagnostic records</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="patient-profile-summary">
+                                <div class="profile-meta-grid">
+                                    <div class="meta-field">
+                                        <span class="meta-field-label">Assigned ID</span>
+                                        <span class="meta-field-value" id="lbl-patient-id">PAT_0000</span>
+                                    </div>
+                                    <div class="meta-field">
+                                        <span class="meta-field-label">Diagnostic Status</span>
+                                        <span class="status-badge" id="lbl-patient-status">Unknown</span>
+                                    </div>
+                                    <div class="meta-field">
+                                        <span class="meta-field-label">Registered Temperature</span>
+                                        <span class="meta-field-value" id="lbl-patient-temp">37.0°C</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="dashboard-row">
+                    <!-- Diagnostic History -->
+                    <div class="glass-card flex-2">
+                        <div class="card-header">
+                            <h3>My Diagnostic Parameters</h3>
+                            <span class="card-subtitle">Symptoms recorded during your evaluation</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="patient-record-details" id="patient-symptoms-list">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guidance Card -->
+                    <div class="glass-card flex-1">
+                        <div class="card-header">
+                            <h3>Educational Resources</h3>
+                            <span class="card-subtitle">Malaria prevention & symptoms protocol</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="educational-widget">
+                                <ul class="edu-list">
+                                    <li><strong>What is Malaria?</strong> A life-threatening disease caused by Plasmodium parasites transmitted through bites of infected female Anopheles mosquitoes.</li>
+                                    <li><strong>Key Prevention:</strong> Use insecticide-treated mosquito nets (ITNs), indoor residual spraying (IRS), and preventive medications when traveling.</li>
+                                    <li><strong>Seek Care:</strong> If you develop high fever, chills, or headache, immediately consult a healthcare professional.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Patient Diagnosis Sandbox View -->
+            <div class="content-panel" id="tab-diagnosis">
+                <div class="dashboard-row">
+                    <!-- Diagnostic Form Card -->
+                    <div class="glass-card flex-1">
+                        <div class="card-header">
+                            <h3 id="diagnosis-card-title">Patient Symptom Assessment</h3>
+                            <span class="card-subtitle">Input clinical symptoms and vital readings</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="diagnosis-form" onsubmit="event.preventDefault(); runPrediction();">
+                                <!-- Symptoms Toggles -->
+                                <div class="form-group">
+                                    <label class="form-label">Clinical Symptoms</label>
+                                    <div class="toggles-grid">
+                                        <div class="toggle-control">
+                                            <div class="toggle-text">
+                                                <span class="toggle-title">Fever</span>
+                                                <span class="toggle-desc">Subjective or measured hotness</span>
+                                            </div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="input-fever" checked>
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="toggle-control">
+                                            <div class="toggle-text">
+                                                <span class="toggle-title">Chills</span>
+                                                <span class="toggle-desc">Shivering or feeling cold</span>
+                                            </div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="input-chills">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="toggle-control">
+                                            <div class="toggle-text">
+                                                <span class="toggle-title">Headache</span>
+                                                <span class="toggle-desc">Localized cranial pain</span>
+                                            </div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="input-headache">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="toggle-control">
+                                            <div class="toggle-text">
+                                                <span class="toggle-title">Nausea</span>
+                                                <span class="toggle-desc">Urge to vomit or stomach upset</span>
+                                            </div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="input-nausea">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="toggle-control">
+                                            <div class="toggle-text">
+                                                <span class="toggle-title">Fatigue</span>
+                                                <span class="toggle-desc">Severe exhaustion or malaise</span>
+                                            </div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="input-fatigue">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+
+                                        <div class="toggle-control">
+                                            <div class="toggle-text">
+                                                <span class="toggle-title">Anemia</span>
+                                                <span class="toggle-desc">Pale conjunctiva, fatigue, low Hb</span>
+                                            </div>
+                                            <label class="switch">
+                                                <input type="checkbox" id="input-anemia">
+                                                <span class="slider round"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Temperature Slider & Input -->
+                                <div class="form-group mt-24">
+                                    <div class="temp-label-row">
+                                        <label class="form-label" for="input-temp-num">Body Temperature (°C)</label>
+                                        <div class="temp-actions">
+                                            <button type="button" class="btn-text" id="btn-missing-temp" onclick="toggleMissingTemp()">Mark Missing</button>
+                                            <input type="number" id="input-temp-num" min="35.0" max="42.5" step="0.1" value="38.5" class="temp-num-input" oninput="syncTempSlider()">
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="temp-slider-container" id="temp-slider-wrap">
+                                        <input type="range" id="input-temp-slider" min="35.0" max="42.5" step="0.1" value="38.5" class="temp-slider" oninput="syncTempNum()">
+                                        <div class="temp-scale">
+                                            <span>35.0°C (Hypothermia)</span>
+                                            <span>37.0°C (Normal)</span>
+                                            <span>38.5°C (Fever)</span>
+                                            <span>42.0°C (Hyperpyrexia)</span>
+                                        </div>
+                                    </div>
+                                    <div class="temp-missing-notice hidden" id="temp-missing-notice">
+                                        Temperature marked as <strong>Missing</strong>. The model will automatically impute this with the training average (<strong><span id="temp-imputed-value">38.0</span>°C</strong>).
+                                    </div>
+                                </div>
+
+                                <div class="form-group mt-32">
+                                    <button type="submit" class="btn primary-btn full-width-btn" id="btn-diagnose-submit">Run Diagnostic Assessment</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Diagnosis Results Card -->
+                    <div class="glass-card flex-1 border-left-highlight" id="prediction-result-panel">
+                        <div class="card-header">
+                            <h3>Diagnostic Recommendation</h3>
+                            <span class="card-subtitle">Machine learning prediction & evidence basis</span>
+                        </div>
+                        <div class="card-body prediction-layout">
+                            <!-- Left: Gauge -->
+                            <div class="gauge-section">
+                                <div class="radial-gauge">
+                                    <svg viewBox="0 0 100 100" class="gauge-svg">
+                                        <circle cx="50" cy="50" r="40" class="gauge-bg"></circle>
+                                        <circle cx="50" cy="50" r="40" class="gauge-fill" id="gauge-fill-arc"></circle>
+                                    </svg>
+                                    <div class="gauge-center">
+                                        <span class="gauge-percent" id="prediction-percent">50%</span>
+                                        <span class="gauge-label">Malaria Probability</span>
+                                    </div>
+                                </div>
+                                <div class="risk-badge" id="prediction-risk-badge">Moderate Risk</div>
+                            </div>
+
+                            <!-- Right: Explanation & Protocol -->
+                            <div class="clinical-details mt-24">
+                                <h4>Clinical Recommendation</h4>
+                                <p class="recommendation-text" id="prediction-recommendation">
+                                    Input patient parameters on the left and click "Run Diagnostic Assessment" to retrieve recommendations.
+                                </p>
+
+                                <h4 class="mt-16">Explainable AI: Feature Contributions</h4>
+                                <div class="explanation-chart" id="explanation-chart">
+                                    <div class="info-message">Provide input to visualize contributions.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Model Performance & Insights View -->
+            <div class="content-panel doctor-only" id="tab-performance">
+                <!-- Selector row -->
+                <div class="glass-card mb-24 py-16">
+                    <div class="selector-row">
+                        <div class="select-wrapper">
+                            <label for="model-selector" class="select-label">Select Classifier Algorithm:</label>
+                            <select id="model-selector" class="custom-select" onchange="changeActiveModel()">
+                                <option value="Logistic_Regression">Logistic Regression (Regularized L2) [Active]</option>
+                                <option value="Decision_Tree">Decision Tree (Max Depth = 3)</option>
+                                <option value="Random_Forest">Random Forest (Estimators = 50, Max Depth = 4)</option>
+                            </select>
+                        </div>
+                        <div class="cv-info-badge">
+                            5-Fold CV Accuracy: <strong id="model-cv-score">96.10%</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Stats Grid -->
+                <div class="metrics-grid mb-24">
+                    <div class="stat-box-small">
+                        <span class="stat-box-title">Validation Accuracy</span>
+                        <span class="stat-box-value" id="val-accuracy-val">94.7%</span>
+                    </div>
+                    <div class="stat-box-small">
+                        <span class="stat-box-title">Test Accuracy</span>
+                        <span class="stat-box-value" id="test-accuracy-val">96.0%</span>
+                    </div>
+                    <div class="stat-box-small">
+                        <span class="stat-box-title">Test Precision</span>
+                        <span class="stat-box-value" id="precision-val">95.9%</span>
+                    </div>
+                    <div class="stat-box-small">
+                        <span class="stat-box-title">Test Recall (Sensitivity)</span>
+                        <span class="stat-box-value" id="recall-val">94.9%</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-row">
+                    <!-- ROC Curve -->
+                    <div class="glass-card flex-1">
+                        <div class="card-header">
+                            <h3>ROC Curve (Receiver Operating Characteristic)</h3>
+                            <span class="card-subtitle">AUC-ROC Score: <strong id="roc-auc-val">0.992</strong></span>
+                        </div>
+                        <div class="card-body chart-card-body">
+                            <div class="chart-container-svg">
+                                <svg viewBox="0 0 100 100" class="roc-svg" id="roc-chart-svg">
+                                    <!-- Grid lines -->
+                                    <line x1="0" y1="0" x2="100" y2="100" class="roc-diagonal" stroke-dasharray="2,2"/>
+                                    <!-- ROC Path -->
+                                    <path d="" class="roc-path" id="roc-curve-path" />
+                                    <!-- Current cutoff point -->
+                                    <circle cx="0" cy="0" r="2" class="roc-point" id="roc-operating-point" />
+                                </svg>
+                                <div class="roc-axis-labels">
+                                    <span class="roc-y-label">True Positive Rate (Sensitivity)</span>
+                                    <span class="roc-x-label">False Positive Rate (1 - Specificity)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confusion Matrix -->
+                    <div class="glass-card flex-1">
+                        <div class="card-header">
+                            <h3>Confusion Matrix</h3>
+                            <span class="card-subtitle">Actual vs Predicted malaria cases in testing set (N = 225)</span>
+                        </div>
+                        <div class="card-body matrix-card-body">
+                            <div class="confusion-matrix-wrapper">
+                                <div class="matrix-grid-2x2">
+                                    <div class="matrix-cell tn">
+                                        <div class="cell-label">True Negative (TN)</div>
+                                        <div class="cell-val" id="cm-tn">120</div>
+                                        <div class="cell-percentage" id="cm-tn-pct">53.3%</div>
+                                    </div>
+                                    <div class="matrix-cell fp">
+                                        <div class="cell-label">False Positive (FP)</div>
+                                        <div class="cell-val" id="cm-fp">6</div>
+                                        <div class="cell-percentage" id="cm-fp-pct">2.7%</div>
+                                    </div>
+                                    <div class="matrix-cell fn">
+                                        <div class="cell-label">False Negative (FN)</div>
+                                        <div class="cell-val" id="cm-fn">5</div>
+                                        <div class="cell-percentage" id="cm-fn-pct">2.2%</div>
+                                    </div>
+                                    <div class="matrix-cell tp">
+                                        <div class="cell-label">True Positive (TP)</div>
+                                        <div class="cell-val" id="cm-tp">94</div>
+                                        <div class="cell-percentage" id="cm-tp-pct">41.8%</div>
+                                    </div>
+                                </div>
+                                <div class="matrix-labels-y">
+                                    <span class="actual-label">ACTUAL</span>
+                                    <div class="y-labels">
+                                        <span>Neg (0)</span>
+                                        <span>Pos (1)</span>
+                                    </div>
+                                </div>
+                                <div class="matrix-labels-x">
+                                    <span class="predicted-label">PREDICTED</span>
+                                    <div class="x-labels">
+                                        <span>Neg (0)</span>
+                                        <span>Pos (1)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Importance -->
+                <div class="glass-card mt-24">
+                    <div class="card-header">
+                        <h3>Feature Importance / Model Weights</h3>
+                        <span class="card-subtitle">Contribution weight of symptoms toward classification decision</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="feature-importance-container" id="global-feature-importance">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Monitoring & Retraining View -->
+            <div class="content-panel doctor-only" id="tab-monitor">
+                <div class="dashboard-row">
+                    <!-- Monitoring Health Cards -->
+                    <div class="glass-card flex-1">
+                        <div class="card-header">
+                            <h3>Local Health Monitoring</h3>
+                            <span class="card-subtitle">Continuous evaluation & feedback loop metrics</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="monitoring-stat-row">
+                                <div class="stat-indicator-pair">
+                                    <span class="indicator-label">Data Drift Status</span>
+                                    <span class="indicator-value status-green">Optimal (0.02 PSI)</span>
+                                </div>
+                                <div class="stat-indicator-pair">
+                                    <span class="indicator-label">Retrain Frequency</span>
+                                    <span class="indicator-value">Continuous (Manual Trigger)</span>
+                                </div>
+                            </div>
+                            
+                            <hr class="card-separator">
+                            
+                            <h4>Database Management</h4>
+                            <p class="section-desc">You can monitor database counts and reset the application's in-memory patient dataset to its factory states.</p>
+                            
+                            <div class="local-database-counter">
+                                <span class="db-count-num" id="db-total-count">1,500</span>
+                                <span class="db-count-lbl">Total Clinical Records in Memory</span>
+                            </div>
+
+                            <button class="btn secondary-btn full-width-btn mb-16" onclick="resetDatabaseToDefault()">
+                                Reset Cache to Factory CSV
+                            </button>
+
+                            <div class="recent-adds-list mt-12" id="newly-added-patients">
+                                <span class="no-records-msg">No newly added patients in this session. Add some using the panel on the right.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Retraining Controller -->
+                    <div class="glass-card flex-1 accent-border">
+                        <div class="card-header">
+                            <h3>Add Field Record & Retrain</h3>
+                            <span class="card-subtitle">Introduce a new clinical case with confirmed PCR result</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="monitor-add-form" onsubmit="event.preventDefault(); addFieldRecord();">
+                                <div class="form-grid-2col">
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">Fever</label>
+                                        <select id="add-fever" class="compact-select">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">Chills</label>
+                                        <select id="add-chills" class="compact-select">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">Headache</label>
+                                        <select id="add-headache" class="compact-select">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">Nausea</label>
+                                        <select id="add-nausea" class="compact-select">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">Fatigue</label>
+                                        <select id="add-fatigue" class="compact-select">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">Anemia</label>
+                                        <select id="add-anemia" class="compact-select">
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">Temperature (°C)</label>
+                                        <input type="number" id="add-temp" min="35.0" max="42.5" step="0.1" value="38.2" class="compact-input">
+                                    </div>
+                                    <div class="form-group-compact">
+                                        <label class="form-label-small">PCR Confirmation</label>
+                                        <select id="add-malaria" class="compact-select highlight-outcome">
+                                            <option value="1">Malaria Positive (+)</option>
+                                            <option value="0">Malaria Negative (-)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn secondary-btn full-width-btn mt-16">Add Patient to Local Cache</button>
+                            </form>
+                            
+                            <hr class="card-separator mt-24">
+                            
+                            <div class="retrain-action-panel">
+                                <h4>Interactive Client-side Retraining</h4>
+                                <p class="section-desc-small">Runs a stochastic gradient descent algorithm in JavaScript to adapt the active Logistic Regression coefficients to the newly cached patient cases.</p>
+                                <button class="btn primary-btn full-width-btn mt-12" id="btn-trigger-retrain" onclick="triggerClientRetrain()">
+                                    Retrain Logistic Regression Model
+                                </button>
+                                <div class="retrain-progress-container hidden" id="retrain-progress-container">
+                                    <div class="progress-bar-track">
+                                        <div class="progress-bar-fill" id="retrain-progress-bar"></div>
+                                    </div>
+                                    <div class="progress-status-text" id="retrain-progress-text">Retraining model: Epoch 0/10 (Loss: 0.23)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Core App JS -->
+    <script src="app.js"></script>
+</body>
+</html>
